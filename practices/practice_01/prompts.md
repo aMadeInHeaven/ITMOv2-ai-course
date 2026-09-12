@@ -12,6 +12,7 @@
 | P2-03 | tests_load.md — RAG с ограниченными источниками | openai/gpt-5 | RAG | [rag.md](../practice_02/rag/rag.md) | [tests_load.md](../practice_02/rag/tests_load.md) | Приняли: только 4 источника, evidence по diff | Числа без источника помечены как best practice | Сверили с TRAINING_PR.diff (app/api.py:35-38; app/review_service.py:19-22) |
 | P2-04 | tests_load.md — сценарии по RCTF | openai/gpt-5 | RCTF | [rctf.md](../practice_02/rctf/rctf.md) | [tests_load.md](../practice_02/rctf/tests_load.md) | Приняли: 5+ сценариев с числами, пороги отказа, evidence файл:строки diff | Отклонено: гипотезы вне diff; числа без источника помечены как best practice | Сверили с TRAINING_PR.diff (app/api.py:35-38; review_service.py:19-22) |
 | P2-05 | ReAct — tests_load.md и журнал шагов | openai/gpt-5 | ReAct | [react.md](../practice_02/react/react.md) | [tests_load.md](../practice_02/react/tests_load.md) | Приняли: 5 сценариев с метриками и evidence; журнал ReAct (6 шагов) | Отклонено: выход за источники | Сверили с TRAINING_PR.diff (app/api.py:35-38; app/api.py:40-42; app/review_service.py:19-22) |
+| P2-06 | Tree of Thoughts — выбор подхода и план | openai/gpt-5 | ToT | [tree_of_thoughts.md](../practice_02/tree_of_thoughts/tree_of_thoughts.md) | [tests_load.md](../practice_02/tree_of_thoughts/tests_load.md) | Приняли: 3 альтернативы, критерии, выбор C; 5 сценариев | Отклонено: избыточная матрица B, минимализм A | Сверили с tree_of_thoughts.md и критериями |
 
 ## Master Prompt v1
 
