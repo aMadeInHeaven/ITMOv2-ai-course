@@ -4,7 +4,7 @@
 
 - Python: 3.14.4
 - Ollama: 0.34.4
-- Platform: captured during review (WSL/Linux x86_64)
+- Hardware: AMD Ryzen 5 7535HS (6 ядер/12 потоков); GPU: NVIDIA GeForce RTX 4060 Laptop; интегрированная графика: Radeon; ОЗУ, доступная в WSL2: ~7.4 ГиБ
 
 ## Model
 
