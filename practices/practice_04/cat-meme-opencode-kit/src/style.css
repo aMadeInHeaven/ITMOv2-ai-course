@@ -126,3 +126,50 @@ body {
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation: none !important; }
 }
+
+/* Form styles */
+.add-card-section {
+  background: #fff;
+  padding: 20px 0;
+  margin-bottom: 24px;
+  border-bottom: 1px solid #eee;
+}
+.card-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 480px;
+}
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.form-group label {
+  font-weight: 600;
+  font-size: 14px;
+}
+.form-group input {
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+}
+.error-msg {
+  color: #d32f2f;
+  font-size: 12px;
+  min-height: 16px;
+}
+#submit-btn {
+  background: var(--color-accent);
+  color: #fff;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  align-self: flex-start;
+}
+#submit-btn:hover {
+  opacity: 0.9;
+}

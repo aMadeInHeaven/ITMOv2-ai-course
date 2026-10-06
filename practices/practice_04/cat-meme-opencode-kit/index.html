@@ -1,30 +1,55 @@
 <!doctype html>
 <html lang="ru">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Котомемы</title>
-    <link rel="stylesheet" href="/src/style.css" />
-  </head>
-  <body>
-    <header class="site-header">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Котомемы</title>
+  <link rel="stylesheet" href="/src/style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container">
+      <h1 class="site-title">Котомемы</h1>
+      <p class="site-tagline">Интернет‑журнал о мемных котах</p>
+    </div>
+  </header>
+
+  <main id="main" class="site-main">
+    <section class="add-card-section" aria-labelledby="add-card-title">
       <div class="container">
-        <h1 class="site-title">Котомемы</h1>
-        <p class="site-tagline">Интернет‑журнал о мемных котах</p>
+        <h2 id="add-card-title">Добавить мемного кота</h2>
+        <form id="add-card-form" class="card-form" novalidate>
+          <div class="form-group">
+            <label for="card-title">Название мема</label>
+            <input type="text" id="card-title" name="title" required minlength="3" maxlength="80" placeholder="Например: Кот понял дедлайн" />
+            <span class="error-msg" id="error-title" role="alert" aria-live="polite"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="card-url">URL картинки (http / https)</label>
+            <input type="url" id="card-url" name="imageUrl" required placeholder="https://example.com/cat.jpg" />
+            <span class="error-msg" id="error-imageUrl" role="alert" aria-live="polite"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="card-alt">Описание картинки (alt)</label>
+            <input type="text" id="card-alt" name="altText" required minlength="8" maxlength="140" placeholder="Опишите, что делает кот (8-140 симв)" />
+            <span class="error-msg" id="error-altText" role="alert" aria-live="polite"></span>
+          </div>
+
+          <button type="submit" id="submit-btn">Опубликовать котика</button>
+        </form>
       </div>
-    </header>
+    </section>
 
-    <main id="main" class="site-main">
-      <section aria-labelledby="catalog-title" class="catalog-section">
-        <div class="container">
-          <h2 id="catalog-title">Каталог карточек</h2>
-          <ul id="card-list" class="card-grid" role="list">
-            <!-- Cards rendered by JS -->
-          </ul>
-        </div>
-      </section>
-    </main>
+    <section aria-labelledby="catalog-title" class="catalog-section">
+      <div class="container">
+        <h2 id="catalog-title">Каталог карточек</h2>
+        <ul id="card-list" class="card-grid" role="list"></ul>
+      </div>
+    </section>
+  </main>
 
-    <script type="module" src="/src/main.js"></script>
-  </body>
-  </html>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
