@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Краткий отчёт по практике: AGENTS.md, skill, MCP, hook и рефлексия." />
+    <link rel="stylesheet" href="/src/styles.css" />
+    <title>Отчёт · Практика 04</title>
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="logo" href="/">← Сайт с котами</a>
+      <nav aria-label="Навигация по отчёту"><a href="#criteria">Критерии</a><a href="#links">Файлы</a></nav>
+    </header>
+    <main id="top">
+      <section class="hero">
+        <div><p class="eyebrow">OpenCode · отчёт по проекту</p><h1>Среда настроена.<br />Проверки пройдены.</h1><p class="lead">Нажмите на название артефакта, чтобы прочитать полный текст файла.</p></div>
+        <div class="total" aria-label="Итоговая оценка"><strong>10</strong><span>из 10 баллов</span></div>
+      </section>
+      <section class="section" id="criteria">
+        <div class="section-title"><p class="eyebrow">Критерии</p><h2>Что сделано</h2></div>
+        <div class="rubric">
+          <article><div class="score">5 / 5</div><div><h3>Настроенная среда</h3><p>Применены <a class="file-link" href="#agents" data-file="agents">AGENTS.md</a>, <a class="file-link" href="#skill" data-file="skill">skill</a>, <a class="file-link" href="#mcp" data-file="mcp">MCP</a>, <a class="file-link" href="#hook" data-file="hook">hook</a> и <a class="file-link" href="#connections" data-file="connections">обоснование подключений</a>.</p></div></article>
+          <article><div class="score">2 / 2</div><div><h3>Skill</h3><p>TDD-автоматизация, acceptance-сценарии и успешная проверка валидатором.</p></div></article>
+          <article><div class="score">2 / 2</div><div><h3>Собственный MCP</h3><p><code>prepare_cat_card</code> проверен корректным и ошибочным вызовами.</p></div></article>
+          <article><div class="score">1 / 1</div><div><h3>Рефлексия</h3><p>Конкретные наблюдения записаны в <a class="file-link" href="#reflection" data-file="reflection">reflection.md</a>.</p></div></article>
+        </div>
+      </section>
+      <section class="section" id="links">
+        <div class="section-title"><p class="eyebrow">Артефакты</p><h2>Файлы проекта</h2></div>
+        <div class="link-grid">
+          <a class="link-card file-link" id="agents" href="#agents" data-file="agents"><span>01</span><strong>AGENTS.md</strong><small>Правила проекта</small><code>./AGENTS.md</code></a>
+          <a class="link-card file-link" id="skill" href="#skill" data-file="skill"><span>02</span><strong>Skill · cat-card-tdd</strong><small>TDD и безопасность</small><code>.opencode/skills/cat-card-tdd/SKILL.md</code></a>
+          <a class="link-card file-link" id="mcp" href="#mcp" data-file="mcp"><span>03</span><strong>MCP · cat-cards</strong><small>JSON-RPC tool</small><code>tools/cat-cards-mcp.mjs</code></a>
+          <a class="link-card file-link" id="hook" href="#hook" data-file="hook"><span>04</span><strong>Hook · check-after-edit</strong><small>Автопроверка</small><code>.opencode/plugins/check-after-edit.js</code></a>
+          <a class="link-card file-link" id="connections" href="#connections" data-file="connections"><span>05</span><strong>Обоснование</strong><small>Зачем нужны подключения</small><code>docs/connections.md</code></a>
+          <a class="link-card file-link" id="reflection" href="#reflection" data-file="reflection"><span>06</span><strong>Рефлексия</strong><small>Выводы по работе</small><code>reflection.md</code></a>
+        </div>
+      </section>
+      <section class="section verification"><div><p class="eyebrow">Проверка</p><h2>Все этапы зелёные</h2><p>Unit-тесты, production-сборка, hook и настоящий обмен с MCP-процессом.</p></div><ul><li><strong>7</strong> unit-тестов</li><li><strong>1</strong> сборка</li><li><strong>1</strong> hook-тест</li><li><strong>6</strong> MCP-проверок</li></ul></section>
+    </main>
+    <dialog class="file-dialog" id="file-dialog" aria-labelledby="file-dialog-title"><div class="dialog-head"><div><p class="eyebrow">Содержимое файла</p><h2 id="file-dialog-title">Файл</h2><code id="file-dialog-path"></code></div><button class="close-button" id="file-dialog-close" type="button" aria-label="Закрыть">×</button></div><pre class="file-content"><code id="file-dialog-content"></code></pre></dialog>
+    <footer><span>ITMO · 2026</span><a href="#top">Наверх</a></footer>
+    <script type="module" src="/src/app.js"></script>
+  </body>
+</html>

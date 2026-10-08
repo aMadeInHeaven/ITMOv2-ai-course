@@ -1,0 +1,19 @@
+{
+  "name": "cat-meme-opencode-kit",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:mcp": "node scripts/test-mcp.mjs",
+    "test:hook": "node scripts/test-hook.mjs",
+    "check": "node scripts/check.mjs"
+  },
+  "devDependencies": {
+    "vite": "^8.3.3",
+    "vitest": "^5.0.3"
+  }
+}
