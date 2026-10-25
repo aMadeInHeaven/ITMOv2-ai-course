@@ -13,6 +13,7 @@
     "check": "node scripts/check.mjs"
   },
   "devDependencies": {
+    "@redocly/cli": "^2.71.0",
     "jsdom": "^30.1.3",
     "vite": "^8.3.3",
     "vitest": "^5.0.3"

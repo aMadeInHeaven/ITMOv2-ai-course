@@ -30,11 +30,24 @@ h2 { margin-bottom:0; font-size:clamp(2rem,4vw,3.5rem); line-height:1; letter-sp
 .cat-card:hover { transform:translateY(-3px); border-color:#575b63; }
 .cat-media { aspect-ratio:4/3; background:#101113; }
 .cat-media img { display:block; width:100%; height:100%; object-fit:cover; }
+.favorite-button { position:absolute; top:.6rem; right:.6rem; z-index:2; display:inline-flex; align-items:center; gap:.4rem; padding:.35rem .5rem; border:1px solid var(--line); border-radius:.6rem; background:rgba(32,34,38,.75); color:#fff; cursor:pointer; }
+.favorite-button .favorite-icon { font-size:1rem; }
+.favorite-button[aria-pressed="true"] { border-color:#ffc963; background:rgba(255,217,102,.12); color:var(--yellow); }
+.favorite-button:hover { border-color:#575b63; }
+.favorite-error { margin:.5rem 0 0; color:#ff9797; min-height:1.2rem; }
+.visually-hidden { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0; }
 .cat-card-body { padding:1.1rem 1.15rem 1.3rem; }
 .cat-card-body span { color:var(--pink); font:750 .74rem/1.2 ui-monospace,monospace; letter-spacing:.08em; text-transform:uppercase; }
 .cat-card-body h3 { margin:.55rem 0 0; font-size:1.2rem; line-height:1.2; }
 .cat-fallback { width:100%; height:100%; display:grid; place-content:center; justify-items:center; gap:.5rem; padding:1rem; color:var(--muted); background:repeating-linear-gradient(135deg,#17191c,#17191c 12px,#202328 12px,#202328 24px); }
 .cat-fallback span:first-child { color:var(--yellow); font-size:2.7rem; font-weight:900; }
+.favorites-toggle { padding:.4rem .7rem; border:1px solid var(--line); border-radius:.6rem; background:transparent; color:#fff; font:600 .9rem/1.2 inherit; cursor:pointer; }
+.favorites-toggle[aria-pressed="true"] { border-color:#ffc963; color:var(--yellow); }
+.favorites-toggle-state { margin-left:.5rem; color:var(--muted); }
+.empty-state { display:grid; place-content:center; gap:.6rem; padding:2rem; border:1px dashed #575b63; border-radius:1rem; background:rgba(32,34,38,.4); text-align:center; }
+.empty-state h3 { margin:0; }
+.empty-state p { margin:0; color:var(--muted); }
+.empty-state-reset { justify-self:center; margin-top:.4rem; padding:.5rem .8rem; border:1px solid var(--line); border-radius:.6rem; background:transparent; color:#fff; cursor:pointer; }
 .add-section { display:grid; grid-template-columns:.8fr 1.2fr; gap:4rem; align-items:start; }
 .add-copy { position:sticky; top:6rem; }
 .add-copy p:last-child { color:var(--muted); }
