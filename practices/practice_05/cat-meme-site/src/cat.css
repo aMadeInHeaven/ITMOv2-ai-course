@@ -21,6 +21,10 @@ h1 { max-width:14ch; margin-bottom:1.25rem; font-size:clamp(3.1rem,7vw,6.6rem); 
 .cat-section-head { display:flex; justify-content:space-between; align-items:end; gap:1.5rem; margin-bottom:2rem; }
 h2 { margin-bottom:0; font-size:clamp(2rem,4vw,3.5rem); line-height:1; letter-spacing:-.05em; }
 .cat-section-head>span { color:var(--muted); }
+.sort-controls { display:flex; gap:.6rem; }
+.sort-button { padding:.4rem .7rem; border:1px solid var(--line); border-radius:.6rem; background:transparent; color:#fff; font:600 .9rem/1.2 inherit; cursor:pointer; }
+.sort-button:hover { border-color:#575b63; }
+.sort-button:focus-visible { outline:3px solid var(--yellow); outline-offset:3px; }
 .cat-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; }
 .cat-card { overflow:hidden; border:1px solid var(--line); border-radius:1.3rem; background:var(--panel); }
 .cat-card:hover { transform:translateY(-3px); border-color:#575b63; }

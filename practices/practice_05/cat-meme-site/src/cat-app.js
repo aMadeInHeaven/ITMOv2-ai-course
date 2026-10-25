@@ -13,6 +13,9 @@ const grid = document.querySelector('#cat-grid');
 const form = document.querySelector('#cat-form');
 const count = document.querySelector('#card-count');
 const status = document.querySelector('#cat-status');
+const catalogHead = document.querySelector('#catalog .cat-section-head');
+let sortMode = 'default'; // 'default' | 'alpha'
+const collator = new Intl.Collator('ru', { sensitivity: 'base' });
 let userCards = restoreCards(localStorage.getItem(STORAGE_KEY));
 
 function fallback(altText) {
@@ -52,9 +55,21 @@ function cardElement(card, index) {
 }
 
 function render() {
-  const cards = [...userCards, ...starterCards];
-  grid.replaceChildren(...cards.map(cardElement));
-  count.textContent = `${cards.length} карточек`;
+  // Build base view: user cards first (newest first), then starter cards
+  const baseView = [...userCards, ...starterCards];
+  let view = baseView;
+  if (sortMode === 'alpha') {
+    // Stable, locale-aware alpha sort by title (ru), case-insensitive.
+    // Tie-breaker: original base order.
+    const baseIndex = new Map(baseView.map((c, i) => [c.id, i]));
+    view = [...baseView].sort((a, b) => {
+      const byTitle = collator.compare(a.title, b.title);
+      if (byTitle !== 0) return byTitle;
+      return (baseIndex.get(a.id) ?? 0) - (baseIndex.get(b.id) ?? 0);
+    });
+  }
+  grid.replaceChildren(...view.map(cardElement));
+  count.textContent = `${view.length} карточек`;
 }
 
 form.addEventListener('submit', (event) => {
@@ -88,3 +103,21 @@ form.addEventListener('input', (event) => {
 });
 
 render();
+
+// Sorting controls: create via DOM API, no innerHTML
+if (catalogHead) {
+  const controls = document.createElement('div');
+  controls.className = 'sort-controls';
+  const sortBtn = document.createElement('button');
+  sortBtn.type = 'button';
+  sortBtn.className = 'sort-button';
+  sortBtn.textContent = 'По алфавиту (А–Я)';
+  sortBtn.addEventListener('click', () => { sortMode = 'alpha'; render(); });
+  const resetBtn = document.createElement('button');
+  resetBtn.type = 'button';
+  resetBtn.className = 'sort-button';
+  resetBtn.textContent = 'Сбросить';
+  resetBtn.addEventListener('click', () => { sortMode = 'default'; render(); });
+  controls.append(sortBtn, resetBtn);
+  catalogHead.append(controls);
+}
