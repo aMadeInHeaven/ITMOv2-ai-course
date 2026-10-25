@@ -1,0 +1,72 @@
+openapi: 3.1.0
+info:
+  title: Cat Meme Favorites Contract
+  version: 1.0.0
+  description: Контракт между UI и Логикой для фичи избранных котиков
+  license:
+    name: MIT
+servers:
+  - url: http://localhost:5173
+    description: Local dev server
+security: []
+paths:
+  /favorites:
+    get:
+      operationId: getFavoriteIds
+      summary: Получить список ID избранного
+      responses:
+        '200':
+          description: Успешный ответ со списком ID
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        '400':
+          description: Ошибка чтения хранилища
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+  /favorites/toggle:
+    post:
+      operationId: toggleFavorite
+      summary: Переключить статус лайка
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id]
+              properties:
+                id:
+                  type: string
+      responses:
+        '200':
+          description: Результат переключения
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [ok, isFavorite]
+                properties:
+                  ok:
+                    type: boolean
+                  isFavorite:
+                    type: boolean
+                  error:
+                    type: string
+        '400':
+          description: Некорректный ID или ошибка квоты
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
