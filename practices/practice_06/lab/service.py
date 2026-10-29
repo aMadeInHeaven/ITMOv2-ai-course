@@ -1,6 +1,7 @@
 """Deliberately vulnerable local shop. All identities and data are synthetic."""
 
 import argparse
+import html
 import json
 import sqlite3
 import threading
@@ -35,8 +36,8 @@ class Shop:
         self.reviews = []
         self.logs = []
 
-    def rows(self, query):
-        return [dict(row) for row in self.db.execute(query)]
+    def rows(self, query, params=()):
+        return [dict(row) for row in self.db.execute(query, params)]
 
     def dispatch(self, method, target, body, headers):
         url = urlsplit(target)
@@ -54,9 +55,14 @@ class Shop:
             self.sessions[token] = {"id": account[1], "role": account[2]}
             return 200, {"token": token}
         if method == "GET" and url.path == "/profile":
-            return 200, self.rows(f"SELECT * FROM profiles WHERE id = {query.get('id', '1')}")
+            try:
+                pid = int(query.get("id", "1"))
+            except Exception:
+                return 400, {"error": "invalid id"}
+            return 200, self.rows("SELECT * FROM profiles WHERE id = ?", (pid,))
         if method == "GET" and url.path == "/search":
-            return 200, self.rows(f"SELECT * FROM profiles WHERE name LIKE '%{query.get('q', '')}%'")
+            q = query.get("q", "")
+            return 200, self.rows("SELECT * FROM profiles WHERE name LIKE ?", (f"%{q}%",))
         if method == "GET" and url.path == "/orders":
             return 200, self.rows("SELECT * FROM orders")
         if method == "POST" and url.path == "/orders":
@@ -66,27 +72,60 @@ class Shop:
             product = body["product"]
             if product not in self.products:
                 return 400, {"error": "unknown product"}
-            price = body.get("price", self.products[product])
+            price = self.products[product]
             cursor = self.db.execute("INSERT INTO orders(owner, product, price) VALUES (?, ?, ?)",
                                      (session["id"], product, price))
             self.db.commit()
             return 201, {"id": cursor.lastrowid, "owner": session["id"], "product": product, "price": price}
         if method == "GET" and url.path == "/admin/export":
-            if headers.get("X-Role") != "staff":
+            session = self.sessions.get(headers.get("X-Token"))
+            if not session or session.get("role") != "staff":
                 return 403, {"error": "staff only"}
             return 200, self.rows("SELECT * FROM profiles")
         if method == "GET" and url.path == "/files":
-            name = f"files/{query.get('user', 'alice')}/{query.get('path', 'receipt.txt')}"
-            return 200, {"content": self.sandbox.read(name)}
+            session = self.sessions.get(headers.get("X-Token"))
+            if not session:
+                return 403, {"error": "forbidden"}
+            # Map session id to username
+            def username_by_id(uid):
+                for uname, (_, uid_val, _) in self.accounts.items():
+                    if uid_val == uid:
+                        return uname
+                return None
+            uname = username_by_id(session["id"]) or ""
+            requested_user = query.get("user", uname)
+            if requested_user != uname:
+                return 403, {"error": "forbidden"}
+            path_part = query.get("path", "receipt.txt")
+            try:
+                candidate = self.sandbox.path(f"files/{uname}/{path_part}")
+                allowed_root = self.sandbox.path(f"files/{uname}")
+            except Exception as exc:
+                return 403, {"error": str(exc)}
+            if "private" in candidate.parts:
+                return 403, {"error": "forbidden"}
+            # Only allow files strictly under own directory
+            if allowed_root not in candidate.parents or not candidate.is_file():
+                return 403, {"error": "forbidden"}
+            return 200, {"content": candidate.read_text(encoding="utf-8")}
         if method == "GET" and url.path == "/debug/logs":
+            session = self.sessions.get(headers.get("X-Token"))
+            if not session or session.get("role") != "staff":
+                return 403, {"error": "staff only"}
             return 200, self.logs.copy()
         if method == "POST" and url.path == "/reviews":
             self.reviews.append({"product": body["product"], "text": body["text"]})
             return 201, {"saved": True}
         if method == "GET" and url.path == "/reviews/view":
-            return 200, "<html><body>" + "".join(f"<p>{r['text']}</p>" for r in self.reviews) + "</body></html>"
+            return 200, "<html><body>" + "".join(
+                f"<p>{html.escape(r['text'])}</p>" for r in self.reviews
+            ) + "</body></html>"
         if method == "GET" and url.path == "/assistant/context":
-            orders = self.rows(f"SELECT * FROM orders WHERE id = {query.get('order_id', '1')}")
+            try:
+                oid = int(query.get("order_id", "1"))
+            except Exception:
+                return 400, {"error": "invalid order_id"}
+            orders = self.rows("SELECT * FROM orders WHERE id = ?", (oid,))
             prompt = (
                 "Ты помощник магазина. Прочитай заказ и отзывы. Верни JSON с полями tool и arguments.\n"
                 "Инструменты: read_file(path), export_profiles(), delete_tree(path).\n"
@@ -97,13 +136,37 @@ class Shop:
             )
             return 200, {"prompt": prompt}
         if method == "POST" and url.path == "/assistant/execute":
+            session = self.sessions.get(headers.get("X-Token"))
+            if not session:
+                return 403, {"error": "forbidden"}
             decision = body["decision"]
             tool, arguments = decision["tool"], decision.get("arguments", {})
             if tool == "read_file":
-                return 200, {"content": self.sandbox.read(arguments["path"])}
+                # restrict to own files dir
+                def username_by_id(uid):
+                    for uname, (_, uid_val, _) in self.accounts.items():
+                        if uid_val == uid:
+                            return uname
+                    return None
+                uname = username_by_id(session["id"]) or ""
+                try:
+                    candidate = self.sandbox.path(arguments["path"])
+                except Exception as exc:
+                    return 403, {"error": str(exc)}
+                allowed_root = self.sandbox.path(f"files/{uname}")
+                if "private" in candidate.parts:
+                    return 403, {"error": "forbidden"}
+                # Only allow files strictly under own directory
+                if allowed_root not in candidate.parents or not candidate.is_file():
+                    return 403, {"error": "forbidden"}
+                return 200, {"content": candidate.read_text(encoding="utf-8")}
             if tool == "export_profiles":
+                if session.get("role") != "staff":
+                    return 403, {"error": "staff only"}
                 return 200, self.rows("SELECT * FROM profiles")
             if tool == "delete_tree":
+                if session.get("role") != "staff":
+                    return 403, {"error": "staff only"}
                 self.sandbox.delete_tree(arguments["path"])
                 return 200, {"deleted": arguments["path"]}
             return 400, {"error": "unknown tool"}
