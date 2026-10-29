@@ -20,67 +20,78 @@
   - Tool execution in `/assistant/execute` (server-side, must enforce authz).
 
 ## Data Flow Diagram (Mermaid)
-
 ```mermaid
 flowchart TD
-  %% Nodes
-  client["Client (Browser / Attacker)"]
-
-  subgraph api_perimeter ["Trust Boundary: API (service.py)"]
-    router["HTTP Router / Dispatch"]
-    login_ep["/login"]
-    profile_ep["/profile"]
-    search_ep["/search"]
-    orders_ep["/orders"]
-    admin_export_ep["/admin/export"]
-    files_ep["/files"]
-    reviews_ep["/reviews, /reviews/view"]
-    logs_ep["/debug/logs"]
-    aictx_ep["/assistant/context"]
-    aiexec_ep["/assistant/execute"]
+  %% External & Untrusted
+  subgraph UntrustedZone ["ЗОНА УГРОЗ: Внешняя среда"]
+    client["Злоумышленник / Клиент"]
+    threat_spoof["[S] Подделка X-Role: staff"]
+    threat_price["[T] Подмена цены 1 рубль"]
+    threat_xss["[T/I] Stored XSS в отзывах"]
   end
 
-  subgraph data_stores ["Trust Boundary: Data Stores"]
+  %% Trust Boundary: API
+  subgraph APIBoundary ["Граница доверия: API (service.py)"]
+    router["HTTP Dispatcher"]
+    ep_orders["POST /orders"]
+    ep_reviews["POST /reviews"]
+    ep_files["GET /files"]
+    ep_admin["GET /admin/export"]
+    ep_logs["GET /debug/logs"]
+    ep_aictx["GET /assistant/context"]
+    ep_aiexec["POST /assistant/execute"]
+    threat_logs["[I] Утечка токенов и логов"]
+  end
+
+  %% Trust Boundary: AI
+  subgraph AIContour ["Граница доверия: AI-контур"]
+    llm["LLM Planner (Помощник)"]
+    threat_prompt["[E] Indirect Prompt Injection"]
+    threat_deputy["[E] Confused Deputy (delete / export)"]
+  end
+
+  %% Trust Boundary: Stores
+  subgraph DataStores ["Граница доверия: Хранилища данных"]
     db[("SQLite Database")]
-    fs["Sandbox FS (sandbox.py)"]
+    fs["Sandbox FS (Файлы)"]
+    threat_sqli["[I/T] SQL-инъекции (id, LIKE)"]
+    threat_trav["[I] Path Traversal (operator-note)"]
   end
 
-  subgraph ai_contour ["Trust Boundary: AI Contour (LLM)"]
-    planner["LLM Planner (External)"]
-  end
+  %% Client interactions
+  client -->|"Запрос с X-Role"| threat_spoof
+  threat_spoof --> ep_admin
 
-  %% Flows
-  client -->|HTTP Request| router
-  router --> login_ep
-  router --> profile_ep
-  router --> search_ep
-  router --> orders_ep
-  router --> admin_export_ep
-  router --> files_ep
-  router --> reviews_ep
-  router --> logs_ep
-  router --> aictx_ep
-  router --> aiexec_ep
+  client -->|"Запрос с price=1"| threat_price
+  threat_price --> ep_orders
 
-  %% Auth
-  client -.->|"X-Token (Bearer)"| router
+  client -->|"Вредоносный HTML/JS"| threat_xss
+  threat_xss --> ep_reviews
 
-  %% DB queries
-  profile_ep -->|"SQL (param pid)"| db
-  search_ep -->|"SQL (param LIKE)"| db
-  orders_ep -->|"SQL (param insert)"| db
-  admin_export_ep -->|"SQL (select all)"| db
+  client -->|"Запрос логов"| ep_logs
+  ep_logs --> threat_logs
 
-  %% FS operations
-  files_ep -->|"Read constrained path"| fs
-  aiexec_ep -->|"Tool: read_file"| fs
-  aiexec_ep -->|"Tool: delete_tree (staff only)"| fs
+  %% Storage interactions
+  router --> ep_files
+  ep_files --> threat_trav
+  threat_trav --> fs
 
-  %% AI Context and Decisions
-  aictx_ep -->|"Prompt (orders + reviews + query)"| planner
-  planner -->|"Decision: tool and arguments"| aiexec_ep
+  router --> threat_sqli
+  threat_sqli --> db
+
+  %% AI flow
+  ep_reviews -.->|"Отзыв попадает в промпт"| ep_aictx
+  ep_aictx --> threat_prompt
+  threat_prompt --> llm
+
+  llm -->|"Решение с опасным tool"| threat_deputy
+  threat_deputy --> ep_aiexec
+  ep_aiexec -->|"Удаление файлов / сброс базы"| fs
+
+  %% Styling threats in red
+  classDef threat fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#b71c1c;
+  class threat_spoof,threat_price,threat_xss,threat_logs,threat_prompt,threat_deputy,threat_sqli,threat_trav threat;
 ```
-
 Notes:
 - All arrows represent data flowing across trust boundaries; server must validate/authorize at the API boundary.
 - The LLM Planner is an untrusted decision source; its outputs require backend authorization checks.
