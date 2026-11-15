@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Коллекция котомемов для тех, кто живёт между дедлайном и зелёными тестами." />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23ffd166'/%3E%3Cpath d='M15 28 20 13l12 9 12-9 5 15v10c0 10-7 16-17 16S15 48 15 38V28Z' fill='%23151618'/%3E%3Ccircle cx='26' cy='35' r='2.5' fill='%23ffd166'/%3E%3Ccircle cx='38' cy='35' r='2.5' fill='%23ffd166'/%3E%3C/svg%3E" />
+    <link rel="stylesheet" href="/src/cat.css" />
+    <title>Котодедлайн — коллекция котомемов</title>
+  </head>
+  <body>
+    <header class="cat-header">
+      <a class="cat-logo" href="#top"><span aria-hidden="true">🐈</span> Котодедлайн</a>
+      <nav aria-label="Основная навигация"><a href="#catalog">Мемы</a><a href="#add">Добавить</a><a class="report-link" href="/report.html">Отчёт</a></nav>
+    </header>
+
+    <main id="top">
+      <section class="cat-hero">
+        <p class="cat-kicker">Коллекция № 04</p>
+        <h1>Когда дедлайн уже рядом, а кот — ещё ближе.</h1>
+        <p>Каталог мемов для разработчиков: добавляйте свои карточки, сохраняйте их в браузере и не бойтесь сломанных картинок.</p>
+        <a class="primary-link" href="#add">Добавить кота</a>
+      </section>
+
+      <section class="cat-section" id="catalog" aria-labelledby="catalog-title">
+        <div class="cat-section-head"><div><p class="cat-kicker">Лента</p><h2 id="catalog-title">Коты в естественной среде</h2></div><span id="card-count">6 карточек</span></div>
+        <div class="cat-grid" id="cat-grid" aria-live="polite"></div>
+      </section>
+
+      <section class="cat-section add-section" id="add" aria-labelledby="add-title">
+        <div class="add-copy"><p class="cat-kicker">Ваша очередь</p><h2 id="add-title">Добавьте мем в коллекцию</h2><p>Карточка появится первой и сохранится в localStorage. Разрешены только безопасные HTTP(S)-ссылки.</p></div>
+        <form id="cat-form" novalidate>
+          <label>Подпись мема<input name="title" minlength="3" maxlength="80" required placeholder="Когда тесты прошли с первого раза" /><small data-error="title"></small></label>
+          <label>URL изображения<input name="imageUrl" inputmode="url" required placeholder="https://example.com/cat.jpg" /><small data-error="imageUrl"></small></label>
+          <label>Описание изображения<textarea name="altText" minlength="8" maxlength="140" required placeholder="Что изображено на фотографии"></textarea><small data-error="altText"></small></label>
+          <button type="submit">Добавить карточку</button>
+          <p class="cat-status" id="cat-status" role="status" aria-live="polite"></p>
+        </form>
+      </section>
+    </main>
+    <footer class="cat-footer"><span>Котодедлайн · 2026</span><a href="/report.html">Открыть отчёт по проекту</a></footer>
+    <script type="module" src="/src/cat-app.js"></script>
+  </body>
+</html>
