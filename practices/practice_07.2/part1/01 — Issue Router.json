@@ -1,0 +1,901 @@
+{
+  "name": "01 — Issue Router",
+  "nodes": [
+    {
+      "parameters": {
+        "owner": {
+          "__rl": true,
+          "value": "aMadeInHeaven",
+          "mode": "name"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "PluginVsCode",
+          "mode": "list",
+          "cachedResultName": "PluginVsCode"
+        },
+        "events": [
+          "issues"
+        ],
+        "options": {}
+      },
+      "id": "c1633f37-bce5-41f7-99ff-0f1d9ccf0937",
+      "name": "Issue Trigger — opened",
+      "type": "n8n-nodes-base.githubTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        160
+      ],
+      "webhookId": "92f350f4-3e61-4515-b6dd-928369d250a3",
+      "credentials": {
+        "githubApi": {
+          "id": "Wf05teLwlpfdTJDq",
+          "name": "GitHub account 6"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.body.action }}",
+              "rightValue": "opened",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              },
+              "id": "21bc7b05-3333-49cc-8e02-280b20c347fd"
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "ba7870d7-b76b-4581-a0b2-12063834510d",
+      "name": "Filter — only opened",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [
+        224,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f1",
+              "name": "issue_id",
+              "value": "={{ $json.body.issue.number }}",
+              "type": "number"
+            },
+            {
+              "id": "f2",
+              "name": "author",
+              "value": "={{ $json.body.issue.user.login }}",
+              "type": "string"
+            },
+            {
+              "id": "f3",
+              "name": "author_association",
+              "value": "={{ $json.body.issue.author_association }}",
+              "type": "string"
+            },
+            {
+              "id": "f4",
+              "name": "issue_title",
+              "value": "={{ $json.body.issue.title }}",
+              "type": "string"
+            },
+            {
+              "id": "f5",
+              "name": "issue_body",
+              "value": "={{ $json.body.issue.body || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "f6",
+              "name": "repo",
+              "value": "={{ $json.body.repository.full_name }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d159acf1-22a9-465a-a129-3ece146e7f03",
+      "name": "Set — issue context",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        448,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "id": "29f8d248-1da6-47df-ac47-7114080a1d3b",
+      "name": "Merge — restore issue context",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        880,
+        176
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ String($json.id ?? '') }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "7c8ac4fc-7215-47a3-85a1-05a962bb46c4",
+      "name": "IF — already processed?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1216,
+        304
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "adda1e52-b6a0-4e82-bfea-21bd68992ad8",
+      "name": "Stop — duplicate issue",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1520,
+        288
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "id": "69229bc1-286d-4dd0-a0d3-3bcf93aa7f19",
+      "name": "Merge — classifier and context",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        2064,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.output.confidence < 0.8 || !['bug', 'task', 'feature'].includes($json.output.type) }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "id": "ea383006-f242-4fdc-87ee-66ebdea85931"
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "cfc23c6d-3a58-4899-a6f0-b39b25f282ca",
+      "name": "IF — low confidence or unknown?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2384,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.output.type }}",
+                    "rightValue": "bug",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "563b9bab-5093-4a7e-a4b0-dad37f42842f"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "bug"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.output.type }}",
+                    "rightValue": "task",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "23ff8047-c41a-416f-adef-663ee076c4bf"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "task"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.output.type }}",
+                    "rightValue": "feature",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "3ae8788e-edbe-4aaf-b98a-a3c614108ae3"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "feature"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "e14a4b74-4c77-4ec1-a49b-ee8a139cb55a",
+      "name": "Switch — issue type",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        2624,
+        176
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ 'https://api.github.com/repos/' + $('Set — issue context').first().json.repo + '/issues/' + $('Set — issue context').first().json.issue_id + '/labels' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "githubApi",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ labels: ['needs-triage'] }) }}",
+        "options": {}
+      },
+      "id": "95e1bbc0-f7f4-4371-a1df-c4005324014a",
+      "name": "HTTP — label needs-triage",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2864,
+        -144
+      ],
+      "credentials": {
+        "githubApi": {
+          "id": "Wf05teLwlpfdTJDq",
+          "name": "GitHub account 6"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ 'https://api.github.com/repos/' + $('Set — issue context').first().json.repo + '/issues/' + $('Set — issue context').first().json.issue_id + '/labels' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "githubApi",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ labels: ['bug'] }) }}",
+        "options": {}
+      },
+      "id": "679b6b75-fe53-44e1-b833-859da6f96e06",
+      "name": "HTTP — label bug",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2864,
+        48
+      ],
+      "credentials": {
+        "githubApi": {
+          "id": "Wf05teLwlpfdTJDq",
+          "name": "GitHub account 6"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ 'https://api.github.com/repos/' + $('Set — issue context').first().json.repo + '/issues/' + $('Set — issue context').first().json.issue_id + '/labels' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "githubApi",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ labels: ['task'] }) }}",
+        "options": {}
+      },
+      "id": "cb80904a-8b35-4da8-bdd7-7f64f4c6e773",
+      "name": "HTTP — label task",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2864,
+        192
+      ],
+      "credentials": {
+        "githubApi": {
+          "id": "Wf05teLwlpfdTJDq",
+          "name": "GitHub account 6"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ 'https://api.github.com/repos/' + $('Set — issue context').first().json.repo + '/issues/' + $('Set — issue context').first().json.issue_id + '/labels' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "githubApi",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ labels: ['feature'] }) }}",
+        "options": {}
+      },
+      "id": "0e5c8881-0f3f-4e79-9bf3-cf9caeed7732",
+      "name": "HTTP — label feature",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2864,
+        352
+      ],
+      "credentials": {
+        "githubApi": {
+          "id": "Wf05teLwlpfdTJDq",
+          "name": "GitHub account 6"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.author_association === 'NONE' }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "05ea2272-e060-403c-ab6d-3cf3733a11ab",
+      "name": "IF — first-time contributor?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2528,
+        736
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ 'https://api.github.com/repos/' + $('Set — issue context').first().json.repo + '/issues/' + $('Set — issue context').first().json.issue_id + '/labels' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "githubApi",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ labels: ['first-time-contributor'] }) }}",
+        "options": {}
+      },
+      "id": "e0fe540f-9c6e-4bcd-8d4f-2bd437708e7b",
+      "name": "HTTP — label first-time contributor",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2832,
+        560
+      ],
+      "credentials": {
+        "githubApi": {
+          "id": "Wf05teLwlpfdTJDq",
+          "name": "GitHub account 6"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ 'https://api.github.com/repos/' + $('Set — issue context').first().json.repo + '/issues/' + $('Set — issue context').first().json.issue_id + '/comments' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "githubApi",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ body: 'Привет @' + $('Set — issue context').first().json.author + '! Рады вашему первому Issue. Пожалуйста, посмотрите CONTRIBUTING.md: https://github.com/' + $('Set — issue context').first().json.repo + '/blob/main/CONTRIBUTING.md' }) }}",
+        "options": {}
+      },
+      "id": "9e8ac8e9-0250-4d22-9e28-1bd08c136a5e",
+      "name": "HTTP — welcome first-time contributor",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2832,
+        720
+      ],
+      "credentials": {
+        "githubApi": {
+          "id": "Wf05teLwlpfdTJDq",
+          "name": "GitHub account 6"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "19YfzXF1Z6GJH1Q1",
+          "mode": "list",
+          "cachedResultName": "processed_issues",
+          "cachedResultUrl": "/projects/Zc5SfCirX4PuCnTY/datatables/19YfzXF1Z6GJH1Q1"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "issue_id",
+              "keyValue": "={{ $json.issue_id }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        656,
+        304
+      ],
+      "id": "02b68289-402c-4816-af48-69bd6f6b8c14",
+      "name": "Data table - find processed issue",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d40f67b4-f08b-45b8-a10b-70c84a1468f2",
+              "name": "author_association",
+              "value": "NONE",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        2160,
+        752
+      ],
+      "id": "b57e3486-0efa-4005-bee6-f8fa26892a45",
+      "name": "mock data new user"
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "value": "19YfzXF1Z6GJH1Q1",
+          "mode": "list",
+          "cachedResultName": "processed_issues",
+          "cachedResultUrl": "/projects/Zc5SfCirX4PuCnTY/datatables/19YfzXF1Z6GJH1Q1"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "issue_id": "={{ $('Set — issue context').first().json.issue_id }}",
+            "author": "={{ $('Set — issue context').first().json.author }}",
+            "created_at": "={{ $now.toISO() }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "issue_id",
+              "displayName": "issue_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "author",
+              "displayName": "author",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "65b43303-cad0-4b63-b590-7167d3757199",
+      "name": "Data Table — save processed issue",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1,
+      "position": [
+        2384,
+        -144
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "FSkmBxC2l33UDCce",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/FSkmBxC2l33UDCce",
+          "cachedResultName": "01 - Issue Router subwf"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "title": "={{ $json.issue_title }}",
+            "body": "={{ $json.issue_body }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "title",
+              "displayName": "title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "body",
+              "displayName": "body",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.4,
+      "position": [
+        1616,
+        480
+      ],
+      "id": "9fd5bed5-43e7-4faa-87f3-b0c34baedf83",
+      "name": "Call '01 - Issue Router subwf'",
+      "alwaysOutputData": false
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Issue Trigger — opened": {
+      "main": [
+        [
+          {
+            "node": "Filter — only opened",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter — only opened": {
+      "main": [
+        [
+          {
+            "node": "Set — issue context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set — issue context": {
+      "main": [
+        [
+          {
+            "node": "Merge — restore issue context",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Data table - find processed issue",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge — restore issue context": {
+      "main": [
+        [
+          {
+            "node": "IF — already processed?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge — classifier and context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF — already processed?": {
+      "main": [
+        [
+          {
+            "node": "Stop — duplicate issue",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Call '01 - Issue Router subwf'",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge — classifier and context": {
+      "main": [
+        [
+          {
+            "node": "IF — low confidence or unknown?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "IF — first-time contributor?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Data Table — save processed issue",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF — low confidence or unknown?": {
+      "main": [
+        [
+          {
+            "node": "HTTP — label needs-triage",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Switch — issue type",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch — issue type": {
+      "main": [
+        [
+          {
+            "node": "HTTP — label bug",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HTTP — label task",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HTTP — label feature",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP — label needs-triage": {
+      "main": [
+        []
+      ]
+    },
+    "HTTP — label bug": {
+      "main": [
+        []
+      ]
+    },
+    "HTTP — label task": {
+      "main": [
+        []
+      ]
+    },
+    "HTTP — label feature": {
+      "main": [
+        []
+      ]
+    },
+    "IF — first-time contributor?": {
+      "main": [
+        [
+          {
+            "node": "HTTP — label first-time contributor",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTTP — welcome first-time contributor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP — label first-time contributor": {
+      "main": [
+        []
+      ]
+    },
+    "Data table - find processed issue": {
+      "main": [
+        [
+          {
+            "node": "Merge — restore issue context",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Call '01 - Issue Router subwf'": {
+      "main": [
+        [
+          {
+            "node": "Merge — classifier and context",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "4af55271-5e3c-41d0-a712-5d13ae5d4374",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "68dbbb4e8fa686c3fd4e9982ade6836edb66976f207553e7ac22df961581c78c"
+  },
+  "nodeGroups": [],
+  "id": "6HIt98Od95f61vpP",
+  "tags": []
+}

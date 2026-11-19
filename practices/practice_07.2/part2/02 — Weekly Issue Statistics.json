@@ -1,0 +1,329 @@
+{
+  "name": "02 — Weekly Issue Statistics",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 * * 1"
+            }
+          ]
+        }
+      },
+      "id": "bb5187ee-777a-42b2-bbd3-c5904212017a",
+      "name": "Schedule Trigger — Monday 09:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b7d55d42-5afc-429c-a80d-56f1d99b2f64",
+              "name": "repo",
+              "value": "aMadeInHeaven/PluginVsCode",
+              "type": "string"
+            },
+            {
+              "id": "b2436204-4d0b-41a9-a4a8-c91dd95f7df7",
+              "name": "week_start",
+              "value": "={{ $now.minus({ weeks: 1 }).startOf('week').toISODate() }}",
+              "type": "string"
+            },
+            {
+              "id": "af413e48-d0d9-4546-a655-f16ddc94e1a7",
+              "name": "week_end",
+              "value": "={{ $now.startOf('week').minus({ days: 1 }).toISODate() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "071c4695-41d2-47e2-b056-c7b64fc17949",
+      "name": "Set — week range",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        240,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ 'https://api.github.com/search/issues?q=' + encodeURIComponent('repo:' + $('Set — week range').first().json.repo + ' is:issue label:bug created:' + $('Set — week range').first().json.week_start + '..' + $('Set — week range').first().json.week_end) + '&per_page=100' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "githubApi",
+        "options": {}
+      },
+      "id": "6ea78a22-e60a-4da9-a8a4-9d01ff28efdb",
+      "name": "HTTP — weekly bug",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        512,
+        0
+      ],
+      "credentials": {
+        "githubApi": {
+          "id": "Wf05teLwlpfdTJDq",
+          "name": "GitHub account 6"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ 'https://api.github.com/search/issues?q=' + encodeURIComponent('repo:' + $('Set — week range').first().json.repo + ' is:issue label:task created:' + $('Set — week range').first().json.week_start + '..' + $('Set — week range').first().json.week_end) + '&per_page=100' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "githubApi",
+        "options": {}
+      },
+      "id": "7ad7776a-7da1-48c4-8c11-7491a9c1a8e3",
+      "name": "HTTP — weekly task",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        768,
+        0
+      ],
+      "credentials": {
+        "githubApi": {
+          "id": "Wf05teLwlpfdTJDq",
+          "name": "GitHub account 6"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ 'https://api.github.com/search/issues?q=' + encodeURIComponent('repo:' + $('Set — week range').first().json.repo + ' is:issue label:feature created:' + $('Set — week range').first().json.week_start + '..' + $('Set — week range').first().json.week_end) + '&per_page=100' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "githubApi",
+        "options": {}
+      },
+      "id": "3542253a-0087-40ea-915e-2e138f978300",
+      "name": "HTTP — weekly feature",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1024,
+        0
+      ],
+      "credentials": {
+        "githubApi": {
+          "id": "Wf05teLwlpfdTJDq",
+          "name": "GitHub account 6"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ 'https://api.github.com/search/issues?q=' + encodeURIComponent('repo:' + $('Set — week range').first().json.repo + ' is:issue label:needs-triage created:' + $('Set — week range').first().json.week_start + '..' + $('Set — week range').first().json.week_end) + '&per_page=100' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "githubApi",
+        "options": {}
+      },
+      "id": "323d2ea5-8b2e-4cb6-a6ed-86d9b95df04e",
+      "name": "HTTP — weekly needs-triage",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1280,
+        0
+      ],
+      "credentials": {
+        "githubApi": {
+          "id": "Wf05teLwlpfdTJDq",
+          "name": "GitHub account 6"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const sourceNodes = [\n  ['bug', 'HTTP — weekly bug'],\n  ['task', 'HTTP — weekly task'],\n  ['feature', 'HTTP — weekly feature'],\n  ['needs-triage', 'HTTP — weekly needs-triage'],\n];\n\nconst byType = {};\nconst byAuthor = {};\nlet total = 0;\n\nfor (const [type, nodeName] of sourceNodes) {\n  const issues = $(nodeName).first().json.items ?? [];\n  byType[type] = issues.length;\n  total += issues.length;\n\n  for (const issue of issues) {\n    const author = issue.user?.login ?? 'unknown';\n    byAuthor[author] = (byAuthor[author] ?? 0) + 1;\n  }\n}\n\nconst esc = (value) => String(value)\n  .replace(/&/g, '&amp;')\n  .replace(/</g, '&lt;')\n  .replace(/>/g, '&gt;')\n  .replace(/\\\"/g, '&quot;');\n\nconst typeRowsHtml = Object.entries(byType)\n  .map(([type, count]) => `<tr><td>${esc(type)}</td><td>${count}</td></tr>`)\n  .join('');\n\nconst authorRowsHtml = Object.entries(byAuthor)\n  .sort(([, left], [, right]) => right - left)\n  .map(([author, count]) => `<tr><td>${esc(author)}</td><td>${count}</td></tr>`)\n  .join('') || '<tr><td colspan=\\\"2\\\">За эту неделю Issues не создавались</td></tr>';\n\nconst { repo, week_start, week_end } = $('Set — week range').first().json;\n\nconst html = `\n  <h2>Еженедельная статистика Issues</h2>\n  <p><b>Репозиторий:</b> ${esc(repo)}<br>\n  <b>Период:</b> ${esc(week_start)} — ${esc(week_end)}<br>\n  <b>Всего Issues:</b> ${total}</p>\n\n  <h3>По типам</h3>\n  <table border=\\\"1\\\" cellpadding=\\\"6\\\" cellspacing=\\\"0\\\">\n    <tr><th>Тип</th><th>Количество</th></tr>\n    ${typeRowsHtml}\n  </table>\n\n  <h3>По авторам</h3>\n  <table border=\\\"1\\\" cellpadding=\\\"6\\\" cellspacing=\\\"0\\\">\n    <tr><th>Автор</th><th>Issues</th></tr>\n    ${authorRowsHtml}\n  </table>\n`;\n\nreturn [{\n  json: { repo, week_start, week_end, total, by_type: byType, by_author: byAuthor, html }\n}];"
+      },
+      "id": "9123edd9-e19c-404a-bc23-b3a92978394d",
+      "name": "Code — group by type and author",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1552,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "syshikovkonstantin@yandex.ru",
+        "toEmail": "konst@gemail.lol",
+        "subject": "Weekly Issues...",
+        "html": "={{ $json.html }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        2064,
+        0
+      ],
+      "id": "301705d9-071e-4094-9909-45a4e08bc5ad",
+      "name": "Send an Email",
+      "webhookId": "a1f4805d-9e88-4a5e-81c1-219b27d63c93",
+      "credentials": {
+        "smtp": {
+          "id": "r433VRFABS7Xxzqs",
+          "name": "SMTP yandex"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "g1Y6bFLVfhdcbped",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/g1Y6bFLVfhdcbped",
+          "cachedResultName": "03 — Weekly Diff + AI Annotation"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.4,
+      "position": [
+        1840,
+        0
+      ],
+      "id": "d5208129-06f8-47fe-83b4-07df4ec87afa",
+      "name": "Call '03 — Weekly Diff + AI Annotation'"
+    }
+  ],
+  "pinData": {
+    "Set — week range": [
+      {
+        "json": {
+          "repo": "aMadeInHeaven/PluginVsCode",
+          "week_start": "2026-11-16",
+          "week_end": "2026-11-19"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Schedule Trigger — Monday 09:00": {
+      "main": [
+        [
+          {
+            "node": "Set — week range",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTTP — weekly bug",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set — week range": {
+      "main": [
+        []
+      ]
+    },
+    "HTTP — weekly bug": {
+      "main": [
+        [
+          {
+            "node": "HTTP — weekly task",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP — weekly task": {
+      "main": [
+        [
+          {
+            "node": "HTTP — weekly feature",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP — weekly feature": {
+      "main": [
+        [
+          {
+            "node": "HTTP — weekly needs-triage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP — weekly needs-triage": {
+      "main": [
+        [
+          {
+            "node": "Code — group by type and author",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code — group by type and author": {
+      "main": [
+        [
+          {
+            "node": "Call '03 — Weekly Diff + AI Annotation'",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call '03 — Weekly Diff + AI Annotation'": {
+      "main": [
+        [
+          {
+            "node": "Send an Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "147b5bd2-e0a5-4260-8266-294a88453791",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "68dbbb4e8fa686c3fd4e9982ade6836edb66976f207553e7ac22df961581c78c"
+  },
+  "nodeGroups": [],
+  "id": "rDgbn6tEzD6ge9Ia",
+  "tags": []
+}
