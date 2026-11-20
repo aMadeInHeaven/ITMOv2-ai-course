@@ -1,0 +1,128 @@
+{
+  "name": "01 - Issue Router subwf",
+  "nodes": [
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5-mini"
+        },
+        "options": {}
+      },
+      "id": "05805a61-63fd-4f35-9cd3-52ce2d3bcf94",
+      "name": "Primary Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -64,
+        144
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "sez84foWDoPLIrbc",
+          "name": "OpenAI account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"type\": \"bug\",\n  \"confidence\": 0.91\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        80,
+        48
+      ],
+      "id": "4e71eb85-9b7f-4a3d-abf2-9528ae98aafd",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Классифицируй GitHub issue.\n\nЗаголовок:\n{{ $json.title }}\n\nОписание:\n{{ $json.body }}\n\nВозможные типы:\n- bug — ошибка, некорректное поведение, падение;\n- feature — запрос новой возможности;\n- task — техническая задача, улучшение, документация;\n- unknown — определить тип нельзя.\n\nВерни JSON:\nпример\n{\n  \"type\": \"bug\",\n  \"confidence\": 0.91\n}",
+        "hasOutputParser": true,
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        -64,
+        -144
+      ],
+      "id": "6fb6b5df-f83f-42f3-9dc5-8326d012fa00",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "title"
+            },
+            {
+              "name": "body"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -352,
+        -144
+      ],
+      "id": "3004aea0-18d8-4c6c-a563-b805a4d98cea",
+      "name": "When Executed by Another Workflow"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Primary Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "69285188-49d2-46fd-917e-29618d3c6aa0",
+  "meta": {
+    "instanceId": "68dbbb4e8fa686c3fd4e9982ade6836edb66976f207553e7ac22df961581c78c"
+  },
+  "nodeGroups": [],
+  "id": "FSkmBxC2l33UDCce",
+  "tags": []
+}
