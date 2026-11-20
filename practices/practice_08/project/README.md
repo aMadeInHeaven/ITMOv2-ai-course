@@ -113,17 +113,3 @@ Vite откроется по адресу http://localhost:5173/ и переда
 | Валидация формы | TaskForm.test.tsx: обязательные поля, дата, лимит описания, дубликаты |
 | Загрузка, пустой список, успех, ошибка, Retry | App.test.tsx, TaskForm.test.tsx, TaskDetailsPage.test.tsx |
 | Полный сценарий от действия до результата | TaskForm.test.tsx — posts the task values, announces success, and renders the returned task |
-
-## Материалы для сдачи
-
-В репозитории должны быть:
-
-- исходники src/ и server/;
-- package.json и package-lock.json;
-- все клиентские и серверные тесты;
-- этот README;
-- docs/prototype.md;
-- скриншоты или запись работы в docs/screenshots/;
-- вывод npm test в docs/test-results.txt либо ссылка на успешный GitHub Actions.
-
-Не добавляйте node_modules, dist, секреты и персональные данные из data/tasks.json.
