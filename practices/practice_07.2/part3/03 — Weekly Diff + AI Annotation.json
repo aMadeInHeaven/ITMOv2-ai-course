@@ -1,0 +1,405 @@
+{
+  "name": "03 — Weekly Diff + AI Annotation",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "f9b0e764-7d5c-4640-97ad-42fa296b1c07",
+      "name": "When Executed by Another Workflow",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        2992,
+        1056
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "weekly_issue_statistics",
+          "mode": "name"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "=repo",
+              "keyValue": "={{ $('When Executed by Another Workflow').first().json.repo }}"
+            },
+            {
+              "keyName": "=week_end",
+              "condition": "lt",
+              "keyValue": "={{ $('When Executed by Another Workflow').first().json.week_start }}"
+            }
+          ]
+        },
+        "limit": 1,
+        "orderBy": true,
+        "orderByColumn": "week_end"
+      },
+      "id": "640070a4-b079-4fb4-8468-285d6fa67e20",
+      "name": "Data Table — get previous week",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        3264,
+        1056
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const current = $('When Executed by Another Workflow').first().json;\nconst previous = $input.all()\n  .map((item) => item.json)\n  .find((row) => row && row.week_start && row.repo === current.repo) ?? null;\n\nconst value = (obj, key) => Number(obj?.[key] ?? 0);\nconst diff = (key) => previous ? value(current.by_type, key) - value(previous, key) : null;\nconst totalDiff = previous ? Number(current.total ?? 0) - Number(previous.total ?? 0) : null;\n\nconst esc = (value) => String(value ?? '')\n  .replace(/&/g, '&amp;')\n  .replace(/</g, '&lt;')\n  .replace(/>/g, '&gt;')\n  .replace(/\\\"/g, '&quot;');\nconst signed = (n) => n === null ? '—' : `${n > 0 ? '+' : ''}${n}`;\n\nconst deltas = {\n  total: totalDiff,\n  bug: diff('bug'),\n  task: diff('task'),\n  feature: diff('feature'),\n  needs_triage: diff('needs-triage'),\n};\n\nconst deltaHtml = previous\n  ? `<h3>Изменение к прошлой неделе</h3>\n     <table border=\\\"1\\\" cellpadding=\\\"6\\\" cellspacing=\\\"0\\\">\n       <tr><th>Показатель</th><th>Δ</th></tr>\n       <tr><td>Всего Issues</td><td>${signed(deltas.total)}</td></tr>\n       <tr><td>bug</td><td>${signed(deltas.bug)}</td></tr>\n       <tr><td>task</td><td>${signed(deltas.task)}</td></tr>\n       <tr><td>feature</td><td>${signed(deltas.feature)}</td></tr>\n       <tr><td>needs-triage</td><td>${signed(deltas.needs_triage)}</td></tr>\n     </table>`\n  : '<h3>Изменение к прошлой неделе</h3><p>Это первый сохранённый отчёт: сравнивать пока не с чем.</p>';\n\nconst ai_prompt = previous\n  ? `Ты аналитик GitHub Issues. Напиши короткий комментарий на русском: 2–3 предложения, без заголовка и Markdown. Не выдумывай причины, которых нет в цифрах.\\nТекущая неделя ${current.week_start} — ${current.week_end}: всего ${current.total}; bug ${value(current.by_type, 'bug')}; task ${value(current.by_type, 'task')}; feature ${value(current.by_type, 'feature')}; needs-triage ${value(current.by_type, 'needs-triage')}.\\nПредыдущая неделя ${previous.week_start} — ${previous.week_end}: всего ${previous.total}; bug ${previous.bug}; task ${previous.task}; feature ${previous.feature}; needs-triage ${previous.needs_triage}.\\nРазница: всего ${signed(deltas.total)}, bug ${signed(deltas.bug)}, task ${signed(deltas.task)}, feature ${signed(deltas.feature)}, needs-triage ${signed(deltas.needs_triage)}.`\n  : `Ты аналитик GitHub Issues. Это первый сохранённый недельный отчёт по репозиторию ${current.repo}. Напиши одну короткую нейтральную фразу на русском без Markdown: что базовая точка создана и будущий отчёт сможет показать изменение. Текущая статистика: всего ${current.total}, bug ${value(current.by_type, 'bug')}, task ${value(current.by_type, 'task')}, feature ${value(current.by_type, 'feature')}, needs-triage ${value(current.by_type, 'needs-triage')}.`;\n\nreturn [{\n  json: {\n    ...current,\n    previous_week_start: previous?.week_start ?? null,\n    previous_week_end: previous?.week_end ?? null,\n    previous_total: previous?.total ?? null,\n    deltas,\n    delta_html: deltaHtml,\n    base_html: `${current.html}${deltaHtml}`,\n    ai_prompt,\n  },\n}];"
+      },
+      "id": "b62047b2-56eb-4baa-8e63-830cc2a40481",
+      "name": "Code — calculate weekly diff",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3520,
+        1056
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.ai_prompt }}",
+        "batching": {}
+      },
+      "id": "53ce6da6-099a-40ab-98b4-f4819e4e6d1e",
+      "name": "Basic LLM Chain — weekly annotation",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        3728,
+        1056
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "id": "1b404522-900b-4dde-9287-0fc80d711d3e",
+      "name": "OpenAI Chat Model — weekly annotation",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        3728,
+        1280
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "sez84foWDoPLIrbc",
+          "name": "OpenAI account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const source = $('Code — calculate weekly diff').first().json;\nconst aiResult = $input.first().json;\nconst aiComment = [\n  aiResult.text,\n  aiResult.output,\n  aiResult.response,\n  aiResult.message?.content,\n].find((value) => typeof value === 'string' && value.trim())\n  ?? 'AI-комментарий не был получен.';\n\nconst esc = (value) => String(value ?? '')\n  .replace(/&/g, '&amp;')\n  .replace(/</g, '&lt;')\n  .replace(/>/g, '&gt;')\n  .replace(/\\\"/g, '&quot;');\n\nconst html = `${source.base_html}\n  <h3>AI-комментарий недели</h3>\n  <p>${esc(aiComment).replace(/\\n/g, '<br>')}</p>`;\n\nreturn [{\n  json: {\n    ...source,\n    ai_comment: aiComment,\n    authors_json: JSON.stringify(source.by_author ?? {}),\n    bug: Number(source.by_type?.bug ?? 0),\n    task: Number(source.by_type?.task ?? 0),\n    feature: Number(source.by_type?.feature ?? 0),\n    needs_triage: Number(source.by_type?.['needs-triage'] ?? 0),\n    html,\n  },\n}];"
+      },
+      "id": "d72d9191-c822-4f7f-a477-e073531278bf",
+      "name": "Code — build email and snapshot",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4064,
+        1056
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "value": "weekly_issue_statistics",
+          "mode": "name"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "=repo",
+              "keyValue": "={{ $json.repo }}"
+            },
+            {
+              "keyName": "=week_start",
+              "keyValue": "={{ $json.week_start }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "repo": "={{ $json.repo }}",
+            "week_start": "={{ $json.week_start }}",
+            "week_end": "={{ $json.week_end }}",
+            "total": "={{ $json.total }}",
+            "bug": "={{ $json.bug }}",
+            "task": "={{ $json.task }}",
+            "feature": "={{ $json.feature }}",
+            "needs_triage": "={{ $json.needs_triage }}",
+            "authors_json": "={{ $json.authors_json }}",
+            "ai_comment": "={{ $json.ai_comment }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "repo",
+              "displayName": "repo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "week_start",
+              "displayName": "week_start",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "week_end",
+              "displayName": "week_end",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "total",
+              "displayName": "total",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "bug",
+              "displayName": "bug",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "task",
+              "displayName": "task",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "feature",
+              "displayName": "feature",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "needs_triage",
+              "displayName": "needs_triage",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "authors_json",
+              "displayName": "authors_json",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "ai_comment",
+              "displayName": "ai_comment",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "16efd6c4-e519-4d0d-be7f-352faaf8abec",
+      "name": "Data Table — save weekly snapshot",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        4304,
+        1056
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "6c07a34a-6507-4eea-a792-40316f0be8f4",
+              "name": "html",
+              "value": "={{ $('Code — build email and snapshot').first().json.html }}",
+              "type": "string"
+            },
+            {
+              "id": "9b2d833d-bc4a-485a-a02a-9b080e2389a4",
+              "name": "ai_comment",
+              "value": "={{ $('Code — build email and snapshot').first().json.ai_comment }}",
+              "type": "string"
+            },
+            {
+              "id": "2650c6ab-43c6-4c41-a5cc-f69ef2b44b1f",
+              "name": "week_start",
+              "value": "={{ $('Code — build email and snapshot').first().json.week_start }}",
+              "type": "string"
+            },
+            {
+              "id": "aeed094e-6be8-495e-9a51-0d264c4cd698",
+              "name": "week_end",
+              "value": "={{ $('Code — build email and snapshot').first().json.week_end }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "5a7b678d-0166-4189-b6d0-2cbe277a6cd7",
+      "name": "Set — return email HTML",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        4560,
+        1056
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Data Table — get previous week",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Data Table — get previous week": {
+      "main": [
+        [
+          {
+            "node": "Code — calculate weekly diff",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code — calculate weekly diff": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain — weekly annotation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model — weekly annotation": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain — weekly annotation",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain — weekly annotation": {
+      "main": [
+        [
+          {
+            "node": "Code — build email and snapshot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code — build email and snapshot": {
+      "main": [
+        [
+          {
+            "node": "Data Table — save weekly snapshot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Data Table — save weekly snapshot": {
+      "main": [
+        [
+          {
+            "node": "Set — return email HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "1e161b78-e255-441a-b899-d1bf60ed72db",
+  "meta": {
+    "instanceId": "68dbbb4e8fa686c3fd4e9982ade6836edb66976f207553e7ac22df961581c78c"
+  },
+  "nodeGroups": [],
+  "id": "g1Y6bFLVfhdcbped",
+  "tags": []
+}
